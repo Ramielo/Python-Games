@@ -87,8 +87,6 @@ Note: You can also submit any additional number of picklocation require data res
 
  
     def import_excel(self):
-
-        # 在开始导入数据之前，在文本框里显示消息
         self.instructions_text.insert("end", "\nStart to import data...\n")
         self.instructions_text.see("end")  # 确保新消息可见
         
@@ -96,7 +94,7 @@ Note: You can also submit any additional number of picklocation require data res
         
         if file_paths:
             try:
-                data_frames = []
+                new_data_frames = []
                 required_columns = ["Location", "Current Qty", "Last Count Date"]
                 
                 for file_path in file_paths:
@@ -104,35 +102,36 @@ Note: You can also submit any additional number of picklocation require data res
                     
                     # 检查是否包含所有必需的列
                     if not all(col in df.columns for col in required_columns):
-                        # 如果缺少任何必需的列，显示错误消息并退出
                         self.show_error_dialog("Critical data missing", "450x150", "Critical data missing in one or more files: Please ensure all imported files contain the following three columns of data:\nLocation, Current Qty, Last Count Date.")
                         return
                     
                     # 仅保留必需的列，并筛选出“Current Qty”为空的行
-                    df_filtered = df[required_columns][df["Current Qty"].isna()]
+                    df_filtered = df[required_columns][df["Current Qty"].isna()]  # 确保只有“Current Qty”为空的行被保留
                     
-                    data_frames.append(df_filtered)
+                    new_data_frames.append(df_filtered)
                 
-                combined_df = pd.concat(data_frames).drop_duplicates().reset_index(drop=True)
+                # 合并新导入的数据
+                new_combined_df = pd.concat(new_data_frames).drop_duplicates().reset_index(drop=True)
+                
+                # 如果之前已经有数据，合并旧数据和新数据
+                if self.combined_df is not None:
+                    self.combined_df = pd.concat([self.combined_df, new_combined_df]).drop_duplicates().reset_index(drop=True)
+                else:
+                    self.combined_df = new_combined_df
                 
                 # 检查合并后的DataFrame是否为空
-                if combined_df.empty:
-                    # 使用insert方法将消息显示在instructions_text小部件中，而不是使用print
-                    self.instructions_text.insert("end", "\nNo emplty location can be found.\n")
+                if self.combined_df.empty:
+                    self.instructions_text.insert("end", "\nNo empty location can be found.\n")
                 else:
                     self.next_button['state'] = 'normal'
-                    # 格式化要在instructions_text小部件中显示的消息
-                    final_data_message = "\nData import completed, final data has {} rows and {} columns.\n".format(combined_df.shape[0], combined_df.shape[1])
-                    # 在instructions_text小部件中显示格式化的消息
+                    final_data_message = "\nData import completed, final data has {} rows and {} columns.\n".format(self.combined_df.shape[0], self.combined_df.shape[1])
                     self.instructions_text.insert("end", final_data_message)
-                    # 可选，将DataFrame的内容作为字符串插入（可能需要格式化）
-                    # self.instructions_text.insert("end", combined_df.to_string())
-                    self.combined_df = combined_df
-                    self.instructions_text.see("end")  # Auto-scroll to the new text
+                self.instructions_text.see("end")  # Auto-scroll to the new text
 
             except Exception as e:
                 print("Unable to read Excel file:", e)
                 self.show_error_dialog("Error", "300x100", f"Unable to read Excel file: {e}")
+
 
     def show_error_dialog(self, title, size, message):
         error_window = PredefinedWindow(self, title, size)
@@ -294,7 +293,6 @@ The installation of this software will not be blocked by the company's system po
             # 使用默认程序打开文件
             if os.path.exists(filepath):
                 webbrowser.open(filepath)
-
 
 if __name__ == "__main__":
     app = MainWindow()
