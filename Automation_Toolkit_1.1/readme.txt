@@ -1,1 +1,0 @@
-AutoKey coding for SIM barcodes typing 开始加入 01/04/2024

@@ -2,9 +2,12 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 from tkinter import messagebox
-import pandas as pd
 import os
 import webbrowser
+import pandas as pd
+import xlrd
+import openpyxl
+import csv
 
 # 定义一个预定义的窗口类
 class PredefinedWindow(tk.Toplevel):
@@ -23,18 +26,125 @@ class MainWindow(tk.Tk):
         self.open_subwindow_button = ttk.Button(self, text="AutoKey coding for Empty Location C/C", command=self.open_subwindow)
         self.open_subwindow_button.pack(pady=20)
 
-        # 添加第二个按钮
-        self.open_bc_type_button = ttk.Button(self, text="AutoKey coding for SIM barcodes typing", command=self.open_bc_type)
-        self.open_bc_type_button.pack(pady=20)
-        
+        # Button to open the second subwindow for SIM barcode typing
+        self.open_sim_bc_button = ttk.Button(self, text="AutoKey coding for SIM barcode typing", command=self.open_sim_bc_subwindow)
+        self.open_sim_bc_button.pack(pady=20)
+
     def open_subwindow(self):
         subwindow = Empty_CC_1(self, "800x600")
-        subwindow.grab_set()
+        # subwindow.grab_set()
 
-    # 定义打开BC_Type_1窗口的方法
-    def open_bc_type(self):
-        bc_type_window = BC_Type_1(self, "800x600")
-        bc_type_window.grab_set()
+    def open_sim_bc_subwindow(self):
+        subwindow = SIM_BC_1(self)
+
+class SIM_BC_1(PredefinedWindow):
+    def __init__(self, parent, window_size="800x600"):
+        super().__init__(parent, "AutoKey coding for SIM barcode typing", window_size)
+        # Initialize any necessary attributes here, such as for storing data
+
+        # Create a textbox with a scrollbar for instructions
+        self.instructions_text = tk.Text(self, wrap="word", bg="white", height=10)
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.instructions_text.yview)
+        self.instructions_text.configure(yscrollcommand=self.scrollbar.set)
+
+        # Insert guidance text
+        instructions = """Instructions for SIM barcode typing will go here. Include step-by-step guidance for users to follow, ensuring the instructions are clear and easy to understand. Detail how to prepare for data importation, any specific requirements for the Excel files, and what users should expect after importing data.
+
+For example, describe any formatting guidelines for the Excel files, how to navigate any software or systems involved in the process, and any tips for ensuring a smooth operation.
+
+After preparing your data according to the guidelines provided, click the [Import Excel Files] button to select and import your data files. Please ensure the files meet the specified format requirements.\n"""
+        self.instructions_text.insert("1.0", instructions)
+
+        # Layout the textbox and scrollbar
+        self.instructions_text.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        self.scrollbar.grid(row=0, column=1, sticky="ns", pady=10)
+
+        # Configure grid row/column weights to ensure the textbox expands with the window size
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        # Create the "Import Excel Files" button and layout using grid
+        self.import_button = ttk.Button(self, text="Import Excel Files", command=self.import_excel)
+        self.import_button.grid(row=1, column=0, columnspan=2, pady=10, sticky="ew")
+        self.data_dict = {}
+
+        # Create the "Export Data" button and layout using grid
+        self.export_button = ttk.Button(self, text="Export Data", command=self.export_data)
+        self.export_button.grid(row=2, column=0, columnspan=2, pady=10, sticky="ew")
+        
+        # Optionally, add additional UI components as needed, similar to the setup in Empty_CC_1
+
+    def import_excel(self):
+        # Clear the textbox and display the starting message
+        self.instructions_text.insert(tk.END, "\nStarting to import data...\n")
+
+        # 打开文件对话框选择CSV文件
+        file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
+        if not file_path:
+            self.instructions_text.insert(tk.END, "\nData import cancelled.\n")
+            return  # 用户取消了对话框
+
+        self.lift()
+        self.data_dict.clear()  # 清空之前的数据
+        rows_imported = 0  # 跟踪导入的行数
+
+        # 读取CSV文件并定位所需的列
+        with open(file_path, newline='', encoding='utf-8-sig') as csvfile:
+            reader = csv.DictReader(csvfile)
+            qty_header = None
+
+            # 检查文件中的特定数量列标题
+            for header in ("Claim Qty", "Qty", "QTY", "SOH", "TransferQty"):
+                if header in reader.fieldnames:
+                    qty_header = header
+                    break
+
+            if not qty_header:
+                self.instructions_text.insert(tk.END, "\nNone of the specified qty columns found in the file.\n")
+                return
+
+            # 在字典中存储数据
+            for row in reader:
+                upc = row['UPC']
+                qty = row[qty_header]
+                # 检查UPC和数量是否非空，然后添加到字典中
+                if upc and qty:
+                    self.data_dict[upc] = qty  # 使用self.data_dict而不是data_dict
+                    rows_imported += 1
+
+        # 显示导入过程的摘要
+        self.instructions_text.insert(tk.END, f"\nData import complete. Total rows imported: {rows_imported}\n")
+
+    def export_data(self):
+        if not hasattr(self, 'data_dict') or not self.data_dict:
+            self.instructions_text.insert(tk.END, "\nNo data to export.\n")
+            return
+
+        export_text = "#n::{\n"
+        for upc, qty in self.data_dict.items():
+            for _ in range(int(qty)):  # 确保数量是整数类型
+                export_text += f'SendText "{upc}"\nSleep 500\n'
+        export_text += "}"
+
+        # 弹出保存文件对话框，让用户选择保存位置和文件名，指定后缀为.ahk
+        filepath = filedialog.asksaveasfilename(defaultextension=".ahk", filetypes=[("AutoHotkey Scripts", "*.ahk")])
+        if filepath:
+            # 将脚本内容写入到文件
+            with open(filepath, "w") as file:
+                file.write(export_text)
+            self.instructions_text.insert(tk.END, "\n\nPlease download and install the Autokey software from the official website. [.ahk] files can only be executed after installing the Autokey software.\n\
+After double-clicking the [.ahk] file, a green [A] icon will appear in the bottom right corner of the taskbar. Press the [WIN] + [N] simultaneously to start running the script.\n\
+This script needs to open the command-line interface of PDE gun in a Windows environment, select [1] -> [7], and then proceed with the script smoothly.\n\
+As both this tool and the Autokey software lack screen locking functionality, you must ensure that the command-line interface of PDE gun remains on the top layer of the screen throughout the entire process. It's recommended not to perform any keyboard or mouse operations during the entire process.\n\
+If you wish to terminate the execution during the process, you can right-click on the green [A] icon in the bottom right corner and directly close the opened [.ahk] file, or set a shortcut key to terminate the execution through the settings option of Autokey.\n\
+It is advisable to close any opened [.ahk] files before running a new [.ahk] file.\n\
+The installation of this software will not be blocked by the company's system policies. However, if used on a personal computer, be aware that some online games may detect the Autokey software as cheating software, leading to account bans.\n")
+            self.instructions_text.see(tk.END)
+            
+            # 使用默认程序打开文件
+            if os.path.exists(filepath):
+                webbrowser.open(filepath)
+
 
 # 修改SubWindow类，使其继承自新的PredefinedWindow类
 class Empty_CC_1(PredefinedWindow):
@@ -51,13 +161,13 @@ class Empty_CC_1(PredefinedWindow):
         instructions = """This tool is used to generate ".ahk" automation scripts compatible with the Autokey software. The scripts generated in this interface are used to batch process [Cycle Count] tasks for [Empty Locations].
 
 Follow the steps below to obtain the original Excel data:
-Step 1 - Enter the WMS's [Picklocation Require] interface, only input the zone number (e.g., 01, 09, 15, etc.), and press [Enter] key.
+Step 1 - Enter the WMS's [Pick Location Inquiry] interface, only input the zone number (e.g., 01, 09, 15, etc.), and press [Enter] key.
 Step 2 - If the result generates <5000 rows of data, proceed to Step 5. If the result generates >5000 rows of data and <10000 rows of data, proceed to Step 4. If the result generates >10000 rows of data, proceed to Step 3.
-Step 3 - Restrict the [Last Count Date] in the [Picklocation Require] interface, advance the date step by step until pressing enter generates <10000 rows of data.
+Step 3 - Restrict the [Last Count Date] in the [Pick Location Inquiry] interface, advance the date step by step until pressing enter generates <10000 rows of data.
 Step 4 - Due to WMS system limitations, the maximum amount of data that can be exported is 5000 rows (excluding the title). Export the data and store it locally. After completion, click the [Location column title] in the current WMS data interface to arrange the Location in descending order.
-Step 5 - Export the data and store it locally. If you arrived here from Step 4, you need to save a second Excel data file.
+Step 5 - Export the data and store it locally (supported formats: [*.xlsx] [*.xls]). If you arrived here from Step 4, you will save a second file.
 
-Now click the [Import Excel Files] button, select all the saved Excel data files, and submit.
+Now click the [Import Excel Files] button, select all the saved Excel data files.
 Note: You can also submit any additional number of picklocation require data results, and this tool will automatically process, keeping all valid data.\n"""
         self.instructions_text.insert("1.0", instructions)
 
@@ -90,7 +200,7 @@ Note: You can also submit any additional number of picklocation require data res
         if self.combined_df is not None:
             self.destroy()  # 关闭当前窗口
             next_window = Empty_CC_2(self.master, "800x600", self.combined_df)
-            next_window.grab_set()
+            # next_window.grab_set()
         else:
             messagebox.showwarning("Warning", "No data to proceed.")
 
@@ -99,7 +209,8 @@ Note: You can also submit any additional number of picklocation require data res
         self.instructions_text.insert("end", "\nStart to import data...\n")
         self.instructions_text.see("end")  # 确保新消息可见
         
-        file_paths = filedialog.askopenfilenames(title="Select Excel Files", filetypes=(("Excel files", "*.xlsx;*.xls;*.xlsm"),))
+        file_paths = filedialog.askopenfilenames(title="Select Excel Files", filetypes=(("Excel files", "*.xlsx;*.xls"),))
+        self.lift()
         
         if file_paths:
             try:
@@ -262,7 +373,7 @@ class Empty_CC_2(PredefinedWindow):
         # 直接创建并显示一个Empty_CC_1窗口的实例
         # 注意: 这假设Empty_CC_1类已经在这个文件中被定义或正确导入
         empty_cc_1_window = Empty_CC_1(self.master, "800x600")
-        empty_cc_1_window.grab_set()
+        # empty_cc_1_window.grab_set()
 
 
     def export_to_txt(self):
@@ -302,46 +413,6 @@ The installation of this software will not be blocked by the company's system po
             # 使用默认程序打开文件
             if os.path.exists(filepath):
                 webbrowser.open(filepath)
-
-class BC_Type_1(PredefinedWindow):
-    def __init__(self, parent, window_size):
-        super().__init__(parent, "BC Type 1", window_size)
-        # Create a Text widget with a Scrollbar
-        self.instructions_text = tk.Text(self, wrap="word", height=10)  # Adjust height as needed
-        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.instructions_text.yview)
-        self.instructions_text.config(yscrollcommand=self.scrollbar.set)
-        
-        # Layout the Text widget and the Scrollbar in the window
-        self.instructions_text.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
-        self.scrollbar.grid(row=0, column=1, sticky="ns", pady=10)
-        
-        # Insert the instruction text
-        self.instructions_text.insert("1.0", "Please choose a method to import data:")
-        self.instructions_text.config(state="disabled")  # Make the text box read-only
-
-        # Configure the window's grid
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
-        # Add buttons for data import
-        self.manual_import_button = ttk.Button(self, text="Manual Data Import", command=self.manual_import)
-        self.manual_import_button.grid(row=1, column=0, columnspan=2, pady=10, padx=10, sticky="ew")
-
-        self.batch_import_button = ttk.Button(self, text="Batch Data Import", command=self.batch_import)
-        self.batch_import_button.grid(row=2, column=0, columnspan=2, pady=10, padx=10, sticky="ew")
-
-    def manual_import(self):
-        messagebox.showinfo("Manual Data Import", "This feature is under development. Please stay tuned.")
-
-    def batch_import(self):
-        file_paths = filedialog.askopenfilenames(title="Select Excel Files", filetypes=[("Excel Files", "*.xlsx;*.xls")])
-        if file_paths:
-            messagebox.showinfo("Batch Data Import", f"Selected files:\n{'\n'.join(file_paths)}")
-        else:
-            messagebox.showinfo("Batch Data Import", "No files were selected.")
-
-
-
 
 if __name__ == "__main__":
     app = MainWindow()
