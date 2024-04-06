@@ -1,0 +1,88 @@
+Request: GET https://twitter.com/i/api/2/badge_count/badge_count.json?supports_ntab_urt=1
+Status code: 200
+Response: {"ntab_unread_count":0,"dm_unread_count":0,"total_unread_count":0,"is_from_urt":true}
+==================================================
+Request: GET https://twitter.com/i/api/2/notifications/all.json?include_profile_interstitial_type=1&include_blocking=1&include_blocked_by=1&include_followed_by=1&include_want_retweets=1&include_mute_edge=1&include_can_dm=1&include_can_media_tag=1&include_ext_is_blue_verified=1&include_ext_verified_type=1&include_ext_profile_image_shape=1&skip_status=1&cards_platform=Web-12&include_cards=1&include_ext_alt_text=true&include_ext_limited_action_results=true&include_quote_count=true&include_reply_count=1&tweet_mode=extended&include_ext_views=true&include_entities=true&include_user_entities=true&include_ext_media_color=true&include_ext_media_availability=true&include_ext_sensitive_media_warning=true&include_ext_trusted_friends_metadata=true&send_error_codes=true&simple_quoted_tweet=true&count=40&cursor=DAABDAABCgABEZCHuynU0AAIAAIAAAABCAADYinMQAgABLCtS7AACwACAAAAC0FZNndVaC0wTXd3AAA&ext=mediaStats%2ChighlightedLabel%2CvoiceInfo%2CbirdwatchPivot%2CsuperFollowMetadata%2CunmentionInfo%2CeditControl
+Status code: 200
+Response: {"globalObjects":{},"timeline":{"id":"EZCHuynU0AAAAAABYinMQLCtS7A","instructions":[{"addEntries":{"entries":[{"entryId":"cursor-top-1712355155893","sortIndex":"1712355155893","content":{"operation":{"cursor":{"value":"DAABDAABCgABEZCHuynU0AAIAAIAAAABCAADYinMQAgABLCtS7AACwACAAAAC0FZNndVaC0wTXd3AAA","cursorType":"Top"}}}},{"entryId":"cursor-bottom-1712355155891","sortIndex":"1712355155891","content":{"operation":{"cursor":{"value":"DAACDAABCgABEZCHuynU0AAIAAIAAAABCAADYinMQAgABLCtS7AACwACAAAAC0FZNndVaC0wTXd3AAA","cursorType":"Bottom"}}}}]}},{"clearEntriesUnreadState":{}},{"markEntriesUnreadGreaterThanSortIndex":{"sortIndex":"1712355155892"}}]}}
+==================================================
+Request: GET https://twitter.com/i/api/2/badge_count/badge_count.json?supports_ntab_urt=1
+Status code: 200
+Response: {"ntab_unread_count":0,"dm_unread_count":0,"total_unread_count":0,"is_from_urt":true}
+==================================================
+Request: GET https://twitter.com/i/api/graphql/U3Hv83fyM17crEQ-G9nMNA/ExploreSidebar?variables=%7B%7D&features=%7B%22rweb_tipjar_consumption_enabled%22%3Afalse%2C%22responsive_web_graphql_exclude_directive_enabled%22%3Atrue%2C%22verified_phone_label_enabled%22%3Afalse%2C%22creator_subscriptions_tweet_preview_api_enabled%22%3Atrue%2C%22responsive_web_graphql_timeline_navigation_enabled%22%3Atrue%2C%22responsive_web_graphql_skip_user_profile_image_extensions_enabled%22%3Afalse%2C%22communities_web_enable_tweet_community_results_fetch%22%3Atrue%2C%22c9s_tweet_anatomy_moderator_badge_enabled%22%3Atrue%2C%22tweetypie_unmention_optimization_enabled%22%3Atrue%2C%22responsive_web_edit_tweet_api_enabled%22%3Atrue%2C%22graphql_is_translatable_rweb_tweet_is_translatable_enabled%22%3Atrue%2C%22view_counts_everywhere_api_enabled%22%3Atrue%2C%22longform_notetweets_consumption_enabled%22%3Atrue%2C%22responsive_web_twitter_article_tweet_consumption_enabled%22%3Atrue%2C%22tweet_awards_web_tipping_enabled%22%3Afalse%2C%22freedom_of_speech_not_reach_fetch_enabled%22%3Atrue%2C%22standardized_nudges_misinfo%22%3Atrue%2C%22tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled%22%3Atrue%2C%22rweb_video_timestamps_enabled%22%3Atrue%2C%22longform_notetweets_rich_text_read_enabled%22%3Atrue%2C%22longform_notetweets_inline_media_enabled%22%3Atrue%2C%22responsive_web_enhance_cards_enabled%22%3Afalse%7D
+Status code: 200
+Response: {"data":{"explore_sidebar":{"timeline":{"instructions":[{"type":"TimelineClearCache"},{"type":"TimelineAddEntries","entries":[{"entryId":"cursor:2","sortIndex":"3","content":{"entryType":"TimelineTimelineCursor","__typename":"TimelineTimelineCursor","value":"DefaultTopCursorValue","cursorType":"Top"}},{"entryId":"Guide--3376341354791490951-1","sortIndex":"2","content":{"entryType":"TimelineTimelineModule","__typename":"TimelineTimelineModule","items":[{"entryId":"trends-Cardano","item":{"itemContent":{"itemType":"TimelineTrend","__typename":"TimelineTrend","associated_cards":[],"name":"Cardano","trend_url":{"url":"twitter://search/?query=Cardano&src=trend_click&pc=true&vertical=trends","urlType":"DeepLink","urtEndpointOptions":{"requestParams":[{"key":"cd","value":"HBgHQ2FyZGFubxgULTMzNzYzNDEzNTQ3OTE0OTA5NTEAAA=="}]}},"trend_metadata":{"domain_context":"Business & finance · Trending","meta_description":"19.8K posts","url":{"url":"twitter://search/?query=Cardano&src=trend_click&pc=true&
+==================================================
+Request: POST https://twitter.com/i/api/1.1/jot/client_event.json
+Status code: 200
+Response: 
+==================================================
+Request: GET https://twitter.com/i/api/1.1/dm/user_updates.json?nsfw_filtering_enabled=false&cursor=GRwmjsCoyb_Z3ssnFo7AqMm_2d7LJyUAAAA&dm_secret_conversations_enabled=false&krs_registration_enabled=true&cards_platform=Web-12&include_cards=1&include_ext_alt_text=true&include_ext_limited_action_results=true&include_quote_count=true&include_reply_count=1&tweet_mode=extended&include_ext_views=true&dm_users=false&include_groups=true&include_inbox_timelines=true&include_ext_media_color=true&supports_reactions=true&include_ext_edit_control=true&include_ext_business_affiliations_label=true&ext=mediaColor%2CaltText%2CbusinessAffiliationsLabel%2CmediaStats%2ChighlightedLabel%2CvoiceInfo%2CbirdwatchPivot%2CsuperFollowMetadata%2CunmentionInfo%2CeditControl
+Status code: 200
+Response: {"user_events":{"cursor":"GRwmjsCoyb_Z3ssnFo7AqMm_2d7LJyUAAAA","last_seen_event_id":"1426440436265230340","trusted_last_seen_event_id":"1426440436265230340","untrusted_last_seen_event_id":"0"}}
+==================================================
+Request: GET https://twitter.com/i/api/graphql/_gBQBgClVuMQb8efxWkbbQ/DMPinnedInboxQuery?variables=%7B%22label%22%3A%22Pinned%22%7D
+Status code: 200
+Response: {"data":{"labeled_conversation_slice":{"items":[],"slice_info":{}}}}
+==================================================
+Request: POST https://twitter.com/i/api/1.1/jot/client_event.json
+Status code: 200
+Response: 
+==================================================
+Request: GET https://twitter.com/i/api/fleets/v1/fleetline?only_spaces=true
+Status code: 200
+Response: {"threads":[{"fully_read":false,"live_content":{"audiospace":{"broadcast_id":"1BdGYrWeRVXJX","id":"","title":"直播宝爷和大兵掏出唧唧大吵一架","state":"","content_type":"visual_audio","is_employee_only":false,"narrow_cast_space_type":0,"invitees_twitter":[],"creator_user_id":"","creator_twitter_user_id":215939847,"primary_admin_user_id":"","admin_user_ids":null,"pending_admin_user_ids":null,"admin_twitter_user_ids":[215939847],"pending_admin_twitter_user_ids":null,"max_admin_capacity":0,"max_guest_sessions":0,"conversation_controls":0,"mentioned_twitter_user_ids":[1619328516604198912],"created_at":null,"updated_at":null,"ended_at":null,"start":"2024-04-05T23:25:36.576256393Z","scheduled_start":null,"canceled_at":null,"guests":[{"user_id":"","session_uuid":"","twitter_user_id":1074632827629494273},{"user_id":"","session_uuid":"","twitter_user_id":1286659362040111105},{"user_id":"","session_uuid":"","twitter_user_id":1449072511950356488},{"user_id":"","session_uuid":"","twitter_user_id":1554450469728165
+==================================================
+Request: POST https://api.twitter.com/1.1/live_pipeline/update_subscriptions
+Status code: 200
+Response: {"subscriptions" : {"errors" : []}}
+==================================================
+Request: GET https://twitter.com/i/api/graphql/TSjM0RF2ZtfG8DPMcWvYAw/ExplorePage?variables=%7B%22cursor%22%3A%22%22%7D&features=%7B%22rweb_tipjar_consumption_enabled%22%3Afalse%2C%22responsive_web_graphql_exclude_directive_enabled%22%3Atrue%2C%22verified_phone_label_enabled%22%3Afalse%2C%22responsive_web_graphql_timeline_navigation_enabled%22%3Atrue%2C%22responsive_web_graphql_skip_user_profile_image_extensions_enabled%22%3Afalse%2C%22creator_subscriptions_tweet_preview_api_enabled%22%3Atrue%2C%22communities_web_enable_tweet_community_results_fetch%22%3Atrue%2C%22c9s_tweet_anatomy_moderator_badge_enabled%22%3Atrue%2C%22tweetypie_unmention_optimization_enabled%22%3Atrue%2C%22responsive_web_edit_tweet_api_enabled%22%3Atrue%2C%22graphql_is_translatable_rweb_tweet_is_translatable_enabled%22%3Atrue%2C%22view_counts_everywhere_api_enabled%22%3Atrue%2C%22longform_notetweets_consumption_enabled%22%3Atrue%2C%22responsive_web_twitter_article_tweet_consumption_enabled%22%3Atrue%2C%22tweet_awards_web_tipping_enabled%22%3Afalse%2C%22freedom_of_speech_not_reach_fetch_enabled%22%3Atrue%2C%22standardized_nudges_misinfo%22%3Atrue%2C%22tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled%22%3Atrue%2C%22rweb_video_timestamps_enabled%22%3Atrue%2C%22longform_notetweets_rich_text_read_enabled%22%3Atrue%2C%22longform_notetweets_inline_media_enabled%22%3Atrue%2C%22responsive_web_enhance_cards_enabled%22%3Afalse%7D
+Status code: 200
+Response: {"data":{"explore_page":{"id":"explore-trend-page","body":{"__typename":"SegmentedTimelines","timelines":[{"id":"for_you","labelText":"For you","scribeConfig":{"page":"trendsai_explore","section":"for_you"},"refreshIntervalSec":360,"timeline":{"id":"VGltZWxpbmU6DACfCgABAAAAAAAAAAEAAA=="}},{"id":"keyword","labelText":"Trending","scribeConfig":{"page":"trendsai_explore","section":"keyword"},"refreshIntervalSec":120,"timeline":{"id":"VGltZWxpbmU6DACfCgABAAAAAAAAAAYAAA=="}},{"id":"news","labelText":"News","scribeConfig":{"page":"trendsai_explore","section":"news"},"refreshIntervalSec":120,"timeline":{"id":"VGltZWxpbmU6DACfCgABAAAAAAAAAAIAAA=="}},{"id":"sports","labelText":"Sports","scribeConfig":{"page":"trendsai_explore","section":"sports"},"refreshIntervalSec":120,"timeline":{"id":"VGltZWxpbmU6DACfCgABAAAAAAAAAAMAAA=="}},{"id":"entertainment","labelText":"Entertainment","scribeConfig":{"page":"trendsai_explore","section":"entertainment"},"refreshIntervalSec":120,"timeline":{"id":"VGltZWx
+==================================================
+Request: GET https://twitter.com/i/api/fleets/v1/fleetline?only_spaces=true
+Status code: 304
+Response: 
+==================================================
+Request: POST https://twitter.com/i/api/1.1/jot/client_event.json
+Status code: 200
+Response: 
+==================================================
+Request: POST https://api.twitter.com/1.1/live_pipeline/update_subscriptions
+Status code: 200
+Response: {"subscriptions" : {"errors" : []}}
+==================================================
+Request: POST https://twitter.com/i/api/1.1/jot/client_event.json
+Status code: 200
+Response: 
+==================================================
+Request: GET https://twitter.com/i/api/fleets/v1/fleetline?only_spaces=true
+Status code: 304
+Response: 
+==================================================
+Request: POST https://twitter.com/i/api/1.1/jot/client_event.json
+Status code: 200
+Response: 
+==================================================
+Request: POST https://twitter.com/i/api/1.1/jot/client_event.json
+Status code: 200
+Response: 
+==================================================
+Request: POST https://twitter.com/i/api/graphql/cvnBmfeq8cAz1LDkcHvriw/HomeTimeline
+Status code: 200
+Response: {"data":{"home":{"home_timeline_urt":{"instructions":[{"type":"TimelineAddEntries","entries":[{"entryId":"tweet-1776391969566232633","sortIndex":"1776416558852079616","content":{"entryType":"TimelineTimelineItem","__typename":"TimelineTimelineItem","itemContent":{"itemType":"TimelineTweet","__typename":"TimelineTweet","tweet_results":{"result":{"__typename":"Tweet","rest_id":"1776391969566232633","core":{"user_results":{"result":{"__typename":"User","id":"VXNlcjoxMDcyMTA5NDE3MjAwNDE0NzIw","rest_id":"1072109417200414720","affiliates_highlighted_label":{},"has_graduated_access":true,"is_blue_verified":true,"profile_image_shape":"Circle","legacy":{"can_dm":true,"can_media_tag":true,"created_at":"Mon Dec 10 12:42:58 +0000 2018","default_profile":false,"default_profile_image":false,"description":"调查记者，主持人。油管频道地址：https://t.co/WfO3vZ0ygY?amp=1，Facebook地址：https://t.co/QO4mprdzUL，TikTok地址：https://t.co/chl5sh7Cfa","entities":{"description":{"urls":[]},"url":{"urls":[{"url":"https://t.co/DrbI80kq
+==================================================
+Request: POST https://twitter.com/i/api/1.1/jot/client_event.json
+Status code: 200
+Response: 
+==================================================
+Request: POST https://twitter.com/i/api/1.1/jot/client_event.json
+Status code: 200
+Response: 
+==================================================
+Request: POST https://twitter.com/i/api/1.1/jot/client_event.json
+Status code: 200
+Response: 
+==================================================
