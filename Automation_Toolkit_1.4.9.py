@@ -34,19 +34,19 @@ class MainWindow(tk.Tk):
         self.geometry("400x600")  # 设置窗口大小
 
         # 新增按钮用于打开 Shipment Verify-able Finder 窗口
-        self.open_svf_button = ttk.Button(self, text="Shipment Verify-able Finder", command=self.open_svf_subwindow)
+        self.open_svf_button = ttk.Button(self, text="Shipment Verify Finder", command=self.open_svf_subwindow)
         self.open_svf_button.pack(pady=20)
         
-        self.open_subwindow_button = ttk.Button(self, text="[AHK coding] Cycle Count Empty", command=self.open_subwindow)
-        self.open_subwindow_button.pack(pady=20)
+        # self.open_subwindow_button = ttk.Button(self, text="Cycle Count Empty", command=self.open_subwindow)
+        # self.open_subwindow_button.pack(pady=20)
 
         # 新增按钮用于打开 AutoKey coding for C/C Everything 窗口
         self.open_et_cc_button = ttk.Button(self, text="[AHK coding] Cycle Count Everything", command=self.open_et_cc_subwindow)
         self.open_et_cc_button.pack(pady=20)
 
         # 新增按钮用于打开 AutoKey coding for C/C Everything 窗口
-        self.open_rsv_button = ttk.Button(self, text="[AHK coding] Receiving", command=self.open_rsv_subwindow)
-        self.open_rsv_button.pack(pady=20)
+        # self.open_rsv_button = ttk.Button(self, text="[AHK coding] Receiving", command=self.open_rsv_subwindow)
+        # self.open_rsv_button.pack(pady=20)
 
         # Button to open the second subwindow for SIM barcode typing
         self.open_sim_bc_button = ttk.Button(self, text="[AHK coding] SIM barcode typing", command=self.open_sim_bc_subwindow)
@@ -330,9 +330,19 @@ Please consult the release notes for data format and additional information.\n""
 
         # Open file dialog to select Excel files
         file_paths = filedialog.askopenfilenames(filetypes=[("Excel 97-2003 Workbook", "*.xls")])
-        if not file_paths:
-            self.instructions_text.insert(tk.END, "\nData import cancelled.\n")
-            return
+        # 预分类文件
+        files_with_condition = []
+        files_without_condition = []
+
+        for file_path in file_paths:
+            try:
+                df = pd.read_excel(file_path, nrows=2)  # 只加载前两行进行检查
+                if 'In Inventory, Not Putaway' not in df.iloc[1].to_string():
+                    files_with_condition.append(file_path)
+                else:
+                    files_without_condition.append(file_path)
+            except Exception as e:
+                print(f"Error previewing file {file_path}: {e}")
 
         case_inquiry_data = {}
         Inbound_Shipment_inquiry_data = {}
@@ -348,7 +358,7 @@ Please consult the release notes for data format and additional information.\n""
             except Exception as e:
                 self.instructions_text.insert(tk.END, f"\nError processing file {inbound_shipment_inquiry_files[0]}: {e}\n")
 
-        for file_path in file_paths:
+        for file_path in files_with_condition:
             if "Case Inquiry" in file_path:
                 try:
                     df = pd.read_excel(file_path)
@@ -363,13 +373,12 @@ Please consult the release notes for data format and additional information.\n""
                     if shipment_col is None:
                         raise ValueError(f"Shipment column not found in {file_path}")
                     
-                    # 对“Case”列和“Inbound Shipment”列进行数据处理
                     df = df.drop_duplicates(subset=['Case'])
                     df = df[df['Case'].astype(str).str.match(r'^\d{10,}$')]
-                    
-                    df[shipment_col] = df[shipment_col].apply(lambda x: str(x).rstrip('.0') if pd.notnull(x) else None)
+                        
+                    df[shipment_col] = df[shipment_col].apply(lambda x: str(int(x)) if pd.notnull(x) and float(x).is_integer() else x)
                     df.dropna(subset=[shipment_col], inplace=True)
-                    
+   
                     counts = df[shipment_col].value_counts().to_dict()
 
                     for key, value in counts.items():
@@ -377,6 +386,47 @@ Please consult the release notes for data format and additional information.\n""
                             case_inquiry_data[key] += value
                         else:
                             case_inquiry_data[key] = value
+
+                except Exception as e:
+                    self.instructions_text.insert(tk.END, f"\nError processing file {file_path}: {e}\n")
+
+        for file_path in files_without_condition:
+            if "Case Inquiry" in file_path:
+                try:
+                    df = pd.read_excel(file_path)
+                    
+                    # 确定“Inbound Shipment”列
+                    shipment_col = None
+                    for col in df.columns:
+                        if "shipment" in col.lower() or "shpmt" in col.lower():
+                            shipment_col = col
+                            break
+
+                    if shipment_col is None:
+                        raise ValueError(f"Shipment column not found in {file_path}")
+                    
+
+                    df = df.drop_duplicates(subset=['Case'])
+                    # 筛选出“Case”列中符合新格式要求的行：包含数字或字母，长度不足10
+                    df = df[df['Case'].astype(str).str.match(r'^[a-zA-Z0-9]{1,9}$')]
+                        
+                        
+                    df[shipment_col] = df[shipment_col].apply(lambda x: str(int(x)) if pd.notnull(x) and float(x).is_integer() else x)
+                    df.dropna(subset=[shipment_col], inplace=True)
+
+                    counts = df[shipment_col].value_counts().to_dict()
+
+                    for key, value in counts.items():
+                        value_str = str([value])
+                        if key in case_inquiry_data:
+                            # 如果key已存在于case_inquiry_data中
+                            # 直接将原有值和新的格式化字符串值组成一个列表
+                            case_inquiry_data[key] = [case_inquiry_data[key], value_str]
+                        else:
+                            # 如果键不存在，则以字符形式（值用方括号包围）添加键值对
+                            case_inquiry_data[key] = value_str
+                
+
                 except Exception as e:
                     self.instructions_text.insert(tk.END, f"\nError processing file {file_path}: {e}\n")
 
@@ -411,7 +461,7 @@ Please consult the release notes for data format and additional information.\n""
             # 将字典转换为DataFrame
             df_inbound = pd.DataFrame(Inbound_Shipment_inquiry_data)
             # 删除重复行
-            df_inbound = df_inbound.drop_duplicates()
+            df_inbound = df_inbound.drop_duplicates(subset=df_inbound.columns[:3].tolist())
             # 更新Inbound_Shipment_inquiry_data字典，以便于展示和之后的处理
             Inbound_Shipment_inquiry_data = df_inbound.to_dict(orient='list')
 
@@ -433,24 +483,46 @@ Please consult the release notes for data format and additional information.\n""
             else:
                 upcoming_expired_shipments = pd.Series([], dtype='object')  # Empty series if 'First DateTime' does not exist
 
-            # Shipments that can be VERIFIED
+            matched_case_count_pairs = {}
+
+            # 遍历DataFrame，检查并处理Matched Case Counts字段
+            for index, row in df.iterrows():
+                matched_case_count = row['Matched Case Counts']
+                if isinstance(matched_case_count, list) and len(matched_case_count) == 2:
+                    # 存储Inbound Shipment和B的键值对
+                    matched_case_count_pairs[row['Inbound Shipment']] = matched_case_count[1]
+                    # 将Matched Case Counts中的A替换原来的列表位置
+                    df.at[index, 'Matched Case Counts'] = matched_case_count[0]
+
+            # 现在，使用更新后的DataFrame执行原有的逻辑
             verified_shipments = df[(df['Cases Shipped'] == df['Cases Received']) & (df['Cases Received'] == df['Matched Case Counts'])]['Inbound Shipment']
-            
-            # Shipments that can be verified but not all have been received
             partial_verified_shipments = df[(df['Cases Received'] == df['Matched Case Counts']) & (df['Cases Received'] < df['Cases Shipped'])]['Inbound Shipment']
+
             
             # Write summary to TXT file
             txt_file_path = 'shipment_summary.txt'
             full_path = os.path.abspath(txt_file_path)  # 转换为绝对路径
             with open(txt_file_path, 'w', encoding='utf-8') as file:
+                # 写入可以被确认的进货信息
                 file.write("Shipments that can be VERIFIED:\n")
-                file.write('\n'.join(verified_shipments.astype(str)) + '\n\n')
+                for shipment in verified_shipments:
+                    # 检查是否需要添加虚拟案例的注释
+                    if shipment in matched_case_count_pairs:
+                        file.write(f"{shipment} (Virtual case detected: {matched_case_count_pairs[shipment]})\n")
+                    else:
+                        file.write(f"{shipment}\n")
                 
-                file.write("Shipments that can be verified but not all have been received:\n")
-                file.write('\n'.join(partial_verified_shipments.astype(str)) + '\n\n')
-                
+                # 写入可以被部分确认的进货信息
+                file.write("\nShipments that can be verified but not all have been received:\n")
+                for shipment in partial_verified_shipments:
+                    # 检查是否需要添加虚拟案例的注释
+                    if shipment in matched_case_count_pairs:
+                        file.write(f"{shipment} (virtual case detected: {matched_case_count_pairs[shipment]})\n")
+                    else:
+                        file.write(f"{shipment}\n")
+
                 if 'First DateTime' in df.columns:  # Write this section only if 'First DateTime' exists
-                    file.write("Shipments that are about to expire:\n")
+                    file.write("\nShipments that are about to expire:\n")
                     file.write('\n'.join(upcoming_expired_shipments.astype(str)) + '\n\n')
 
                 # Additional Section: Insert Case Inquiry and Inbound Shipment Inquiry Data summaries

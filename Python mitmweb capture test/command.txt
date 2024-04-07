@@ -1,1 +1,0 @@
-mitmweb --script capture.py
