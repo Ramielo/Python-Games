@@ -51,7 +51,7 @@ class MainWindow(tk.Tk):
         self.open_subwindow_button = ttk.Button(self, text="Cycle Count", command=self.open_subwindow)
         self.open_subwindow_button.pack(pady=20)
 
-        self.open_rsv_button = ttk.Button(self, text="Food Expiry Report Generator", command=self.open_rsv_subwindow)
+        self.open_rsv_button = ttk.Button(self, text="Food Expiry Report Generator", command=self.open_ferg_subwindow)
         self.open_rsv_button.pack(pady=20)
 
         # Button to open the second subwindow for SIM barcode typing
@@ -87,7 +87,7 @@ class MainWindow(tk.Tk):
         contact_label.bind("<Button-1>", lambda e: webbrowser.open("mailto:charles.liang@davidjones.com.au"))
 
     def open_rsv_subwindow(self):
-        subwindow = FERG_1(self)
+        subwindow = RSV_1(self)
         self.iconify()
 
         # 子窗口关闭时销毁子窗口并呼出主窗口
@@ -110,13 +110,13 @@ class MainWindow(tk.Tk):
 
     def open_svf_subwindow(self):
         # 实例化 SVF_1 类
-        subwindow = FERG_1(self)
+        subwindow = SVF_1(self)
         self.iconify()
         subwindow.protocol("WM_DELETE_WINDOW", lambda: (subwindow.destroy(), self.deiconify()))
 
     # Then, define the method that this button calls:
-    def open_rsv_subwindow(self):
-        subwindow = RSV_1(self)
+    def open_ferg_subwindow(self):
+        subwindow = FERG_1(self)
         self.iconify()
         subwindow.protocol("WM_DELETE_WINDOW", lambda: (subwindow.destroy(), self.deiconify()))
 
@@ -442,16 +442,18 @@ Please consult the release notes for data format and additional information.\n""
         # Open file dialog to select Excel files
         file_paths = filedialog.askopenfilenames(filetypes=[("Excel 97-2003 Workbook", "*.xls")])
         # 预分类文件
-        files_with_condition = []
-        files_without_condition = []
+        files_cases_consumed = []
+        files_cases_virtual = []
 
         for file_path in file_paths:
             try:
                 df = pd.read_excel(file_path, nrows=2)  # 只加载前两行进行检查
-                if 'In Inventory, Not Putaway' not in df.iloc[1].to_string():
-                    files_with_condition.append(file_path)
-                else:
-                    files_without_condition.append(file_path)
+                if 'Consumed' in df.iloc[1].to_string():
+                    files_cases_consumed.append(file_path)
+                    print("files_cases_consumed",files_cases_consumed)
+                elif 'In Inventory, Not Putaway' in df.iloc[1].to_string():
+                    files_cases_virtual.append(file_path)
+                    print("files_cases_virtual",files_cases_virtual)
             except Exception as e:
                 print(f"Error previewing file {file_path}: {e}")
 
@@ -465,43 +467,42 @@ Please consult the release notes for data format and additional information.\n""
         elif len(inbound_shipment_inquiry_files) == 1:
             try:
                 df_inbound = pd.read_excel(inbound_shipment_inquiry_files[0], usecols=["Inbound Shipment", "Cases Shipped", "Cases Received"])
+                print (df_inbound)
                 Inbound_Shipment_inquiry_data = df_inbound.to_dict(orient='list')
+                # print(Inbound_Shipment_inquiry_data)
             except Exception as e:
                 self.instructions_text.insert(tk.END, f"\nError processing file {inbound_shipment_inquiry_files[0]}: {e}\n")
 
-        for file_path in files_with_condition:
-            if "Case Inquiry" in file_path:
-                try:
-                    df = pd.read_excel(file_path)
+        for file_path in files_cases_consumed:
+            try:
+                df = pd.read_excel(file_path) # 依次处理cases_consumed表
+                df = df.drop_duplicates(subset=['Case']) # 按Case number去重
+                df = df[df['Case'].astype(str).str.match(r'^\d{10,}$')] # 仅保留Case列=[长度至少为10位的纯数字字符串]的行
+
+                shipment_col = None
+                for col in df.columns:
+                    if "shipment" in col.lower() or "shpmt" in col.lower():
+                        shipment_col = col # 把cases_consumed表的“Inbound Shipment”列取出来
+                        break
+                if shipment_col is None:
+                    raise ValueError(f"Shipment column not found in {file_path}")
                     
-                    # 确定“Inbound Shipment”列
-                    shipment_col = None
-                    for col in df.columns:
-                        if "shipment" in col.lower() or "shpmt" in col.lower():
-                            shipment_col = col
-                            break
+                df[shipment_col] = df[shipment_col].apply(lambda x: str(int(x)) if pd.notnull(x) and float(x).is_integer() else x) # “Inbound Shipment”列规整格式：整数形式的字符串
+                df.dropna(subset=[shipment_col], inplace=True) # “Inbound Shipment”列删空行
+               
+                counts = df[shipment_col].value_counts().to_dict()
+                print (counts)
 
-                    if shipment_col is None:
-                        raise ValueError(f"Shipment column not found in {file_path}")
-                    
-                    df = df.drop_duplicates(subset=['Case'])
-                    df = df[df['Case'].astype(str).str.match(r'^\d{10,}$')]
-                        
-                    df[shipment_col] = df[shipment_col].apply(lambda x: str(int(x)) if pd.notnull(x) and float(x).is_integer() else x)
-                    df.dropna(subset=[shipment_col], inplace=True)
-   
-                    counts = df[shipment_col].value_counts().to_dict()
+                for key, value in counts.items():
+                    if key in case_inquiry_data:
+                        case_inquiry_data[key] += value
+                    else:
+                        case_inquiry_data[key] = value
 
-                    for key, value in counts.items():
-                        if key in case_inquiry_data:
-                            case_inquiry_data[key] += value
-                        else:
-                            case_inquiry_data[key] = value
+            except Exception as e:
+                self.instructions_text.insert(tk.END, f"\nError processing file {file_path}: {e}\n")
 
-                except Exception as e:
-                    self.instructions_text.insert(tk.END, f"\nError processing file {file_path}: {e}\n")
-
-        for file_path in files_without_condition:
+        for file_path in files_cases_virtual:
             if "Case Inquiry" in file_path:
                 try:
                     df = pd.read_excel(file_path)
@@ -543,8 +544,8 @@ Please consult the release notes for data format and additional information.\n""
 
 
         # Add the fourth column for matches with Case Inquiry data
-        if Inbound_Shipment_inquiry_data:
-            Inbound_Shipment_inquiry_data['Matched Case Counts'] = [
+        if Inbound_Shipment_inquiry_data: #Inbound_Shipment_inquiry_data已删，修改
+            Inbound_Shipment_inquiry_data['Cases Consumed'] = [
                 case_inquiry_data.get(str(shipment), 0) for shipment in Inbound_Shipment_inquiry_data['Inbound Shipment']
             ]
 
@@ -583,7 +584,7 @@ Please consult the release notes for data format and additional information.\n""
         def summarize_and_write_to_txt(Inbound_Shipment_inquiry_data, case_inquiry_data):
             # Convert dictionary to DataFrame
             df = pd.DataFrame(Inbound_Shipment_inquiry_data)
-            
+            print(df)
             # Ensure correct datetime format if 'First DateTime' column exists
             if 'First DateTime' in df.columns:
                 df['First DateTime'] = pd.to_datetime(df['First DateTime'], format='%d/%m/%Y %H:%M')
@@ -596,18 +597,18 @@ Please consult the release notes for data format and additional information.\n""
 
             matched_case_count_pairs = {}
 
-            # 遍历DataFrame，检查并处理Matched Case Counts字段
+            # 遍历DataFrame，检查并处理Cases Consumed字段
             for index, row in df.iterrows():
-                matched_case_count = row['Matched Case Counts']
+                matched_case_count = row['Cases Consumed']
                 if isinstance(matched_case_count, list) and len(matched_case_count) == 2:
                     # 存储Inbound Shipment和B的键值对
                     matched_case_count_pairs[row['Inbound Shipment']] = matched_case_count[1]
-                    # 将Matched Case Counts中的A替换原来的列表位置
-                    df.at[index, 'Matched Case Counts'] = matched_case_count[0]
+                    # 将Cases Consumed中的A替换原来的列表位置
+                    df.at[index, 'Cases Consumed'] = matched_case_count[0]
 
             # 现在，使用更新后的DataFrame执行原有的逻辑
-            verified_shipments = df[(df['Cases Shipped'] == df['Cases Received']) & (df['Cases Received'] == df['Matched Case Counts'])]['Inbound Shipment']
-            partial_verified_shipments = df[(df['Cases Received'] == df['Matched Case Counts']) & (df['Cases Received'] < df['Cases Shipped'])]['Inbound Shipment']
+            verified_shipments = df[(df['Cases Shipped'] == df['Cases Received']) & (df['Cases Received'] == df['Cases Consumed'])]['Inbound Shipment']
+            partial_verified_shipments = df[(df['Cases Received'] == df['Cases Consumed']) & (df['Cases Received'] < df['Cases Shipped'])]['Inbound Shipment']
 
             
             # Write summary to TXT file
@@ -640,7 +641,7 @@ Please consult the release notes for data format and additional information.\n""
                 file.write("\nInbound Shipment Inquiry Data Summary:\n")
                 if 'First DateTime' in Inbound_Shipment_inquiry_data:
                     for i in range(len(Inbound_Shipment_inquiry_data['Inbound Shipment'])):
-                        text_line = f"{Inbound_Shipment_inquiry_data['Inbound Shipment'][i]}, {Inbound_Shipment_inquiry_data['Cases Shipped'][i]}, {Inbound_Shipment_inquiry_data['Cases Received'][i]}, {Inbound_Shipment_inquiry_data['Matched Case Counts'][i]}"
+                        text_line = f"{Inbound_Shipment_inquiry_data['Inbound Shipment'][i]}, {Inbound_Shipment_inquiry_data['Cases Shipped'][i]}, {Inbound_Shipment_inquiry_data['Cases Received'][i]}, {Inbound_Shipment_inquiry_data['Cases Consumed'][i]}"
                         if 'First DateTime' in Inbound_Shipment_inquiry_data:
                             text_line += f", {Inbound_Shipment_inquiry_data['First DateTime'][i]}"
                         file.write(text_line + "\n")
