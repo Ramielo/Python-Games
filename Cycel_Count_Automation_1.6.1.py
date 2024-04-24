@@ -218,7 +218,7 @@ class Empty_CC_2(tk.Toplevel):
         export_thread.daemon = True  # 设置为守护线程，这样当主程序退出时线程也会被终止
         export_thread.start()
 
-    def update_display(self):
+    def update_display(self, event=None):
         # 解析选择的日期
         selected_date_str = self.date_option_var.get().replace("Update to date: ", "").replace(" (All data)", "")
         try:
@@ -263,7 +263,8 @@ class Empty_CC_2(tk.Toplevel):
         self.date_options_menu.config(state='disabled')
         
         # 使用过滤后的DataFrame更新self.combined_df，过滤是在display环节完成的
-        self.combined_df = self.filtered_df.copy()
+        # 复制 DataFrame 并转换所有列为字符串类型
+        self.combined_df = self.filtered_df.copy().astype(str)
 
         start_message = "\n\nExecution has started. Processing locations..."
         self.text_box.insert(tk.END, start_message)
@@ -325,8 +326,9 @@ class Empty_CC_2(tk.Toplevel):
             try:
                 image_location = pyautogui.locateCenterOnScreen(tmp_image_path, confidence=0.5)
                 if image_location:
-                    self.text_box.insert(tk.END, "\n\nWARNING found, Ctrl + A sent to skip")
-                    self.text_box.see(tk.END)
+                    message = f"\n\nWARNING message in location {locations[self.current_location_index-1]}, Ctrl + A sent to continue."
+                    self.text_box.insert(tk.END, message)
+                    self.text_box.see(tk.END)  # Scroll to the bottom
                     pyautogui.hotkey('ctrl', 'a')
                     time.sleep(sleep_time)
                     # print ("Ctrl+A, 等待", sleep_time, "秒")
@@ -353,6 +355,8 @@ class Empty_CC_2(tk.Toplevel):
             pyautogui.hotkey('ctrl', 'n') # 实际操作时激活这一行
             time.sleep(sleep_time)
             # print ("Ctrl+N, 等待", sleep_time, "秒")
+
+            # self.update() # 好像没用
 
             if self.current_location_index==len(locations):  # If the loop finishes normally without a break
                 self.current_location_index = 0  # Reset position for next execution
