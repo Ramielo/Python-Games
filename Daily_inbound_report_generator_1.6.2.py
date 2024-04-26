@@ -172,7 +172,7 @@ class IDR_1(tk.Tk):
         total_trf_units, total_dbt_units, total_trf_units_food, total_dbt_units_food, total_asn = (0 for _ in range(13))
         day_of_week = None
 
-        if len(file_data['Receiving']) > 0:
+        try:
             df_receiving = pd.read_excel(file_data['Receiving'][0], usecols=["Date Time", "User", "Container","Dept","Nbr Units"],dtype=str)
             day_of_week = pd.to_datetime(df_receiving.loc[0, 'Date Time'], format='%d/%m/%Y %H:%M').day_name()
             
@@ -187,8 +187,9 @@ class IDR_1(tk.Tk):
             total_receiving_units = df_receiving['Nbr Units'].sum()
             total_receiving_cases = df_receiving['Container'].nunique()
             total_receiving_units_food = df_receiving_food_sure['Nbr Units'].sum()
+        except: pass
 
-        if len(file_data['Putaway']) > 0:
+        try:
             df_pa = pd.concat([pd.read_excel(file, usecols=["Date Time", "User", "Container", "Dept", "Nbr Units", "To Location"], dtype=str) for file in file_data['Putaway']], ignore_index=True)
             day_of_week = pd.to_datetime(df_pa.loc[0, 'Date Time'], format='%d/%m/%Y %H:%M').day_name()
             
@@ -209,8 +210,9 @@ class IDR_1(tk.Tk):
             df_pa_food['Nbr Units'] = pd.to_numeric(df_pa_food['Nbr Units'], errors='coerce').fillna(0).astype(int)
             total_pa_units_food = df_pa_food['Nbr Units'].sum()
             # print("total_pa_units_food: ", total_pa_units_food)
+        except: pass
 
-        if len(file_data['Adhoc']) > 0:
+        try:
             df_ah = pd.read_excel(file_data['Adhoc'][0], usecols=["Date Time", "User", "Container", "Dept", "Nbr Units", "To Location"], dtype=str)
             day_of_week = pd.to_datetime(df_ah.loc[0, 'Date Time'], format='%d/%m/%Y %H:%M').day_name()
 
@@ -238,8 +240,9 @@ class IDR_1(tk.Tk):
             df_ah_food['Nbr Units'] = pd.to_numeric(df_ah_food['Nbr Units'], errors='coerce').fillna(0).astype(int)
             total_ah_units_food = df_ah_food['Nbr Units'].sum()
             # print("total_ah_units_food: ", total_ah_units_food)
+        except: pass
 
-        if len(file_data['Rework']) > 0:
+        try:
             df_rework = pd.read_excel(file_data['Rework'][0], usecols=["Date Time", "User", "Container","Dept","Nbr Units"],dtype=str)
             day_of_week = pd.to_datetime(df_rework.loc[0, 'Date Time'], format='%d/%m/%Y %H:%M').day_name()
 
@@ -251,8 +254,9 @@ class IDR_1(tk.Tk):
             df_rework['Nbr Units'] = pd.to_numeric(df_rework['Nbr Units'], errors='coerce').fillna(0).astype(int)
             total_rework_units = df_rework['Nbr Units'].sum()
             # print("total_rework_units: ", total_rework_units)
+        except: pass
 
-        if len(file_data['Transfer / Debit']) > 0:
+        try:
             df_trfdbt = pd.read_excel(file_data['Transfer / Debit'][0], usecols=["Date Time", "User", "Pkt Ctrl Nbr", "Container","Dept","Nbr Units"],dtype=str)
             day_of_week = pd.to_datetime(df_trfdbt.loc[0, 'Date Time'], format='%d/%m/%Y %H:%M').day_name()
 
@@ -289,8 +293,9 @@ class IDR_1(tk.Tk):
             df_dbt_food['Nbr Units'] = pd.to_numeric(df_dbt_food['Nbr Units'], errors='coerce').fillna(0).astype(int)
             total_dbt_units_food = df_dbt_food['Nbr Units'].sum()
             # print("total_dbt_units_food: ", total_dbt_units_food)      
+        except: pass
 
-        if len(file_data['ASN verified']) > 0:
+        try:
             df_asn = pd.read_excel(file_data['ASN verified'][0], usecols=["Last Modified Date", "User"],dtype=str)
             day_of_week = pd.to_datetime(df_asn.loc[0, 'Last Modified Date'], format='%d/%m/%Y %H:%M').day_name()
             df_asn.columns = ["Date Time", "User"]
@@ -301,8 +306,9 @@ class IDR_1(tk.Tk):
             # print("df_asn_result:",df_asn_result)
             total_asn = df_asn.iloc[:, 0].nunique()
             # print(total_asn)
+        except: pass
 
-        if len(file_data['Cycle Count']) > 0:
+        try:
             df_cc = pd.concat([pd.read_excel(file, usecols=["Date Time", "User", "Container", "Dept", "Nbr Units"], dtype=str) for file in file_data['Cycle Count']], ignore_index=True).drop_duplicates()
             day_of_week = pd.to_datetime(df_cc.loc[0, 'Date Time'], format='%d/%m/%Y %H:%M').day_name()
 
@@ -310,7 +316,7 @@ class IDR_1(tk.Tk):
             # print("df_cc:",df_cc)
             df_cc_result = self.calculate_user_times(df_cc,interval_acceptable_delay[5])
             # print("df_cc_result:",df_cc_result)
-
+        except: pass
 
         all_users = list(set(df_receiving_result) | set(df_pa_result) | set(df_ah_result) | set(df_rework_result) | set(df_trf_result) | set(df_dbt_result) | set(df_cc_result) | set(df_asn_result))
 

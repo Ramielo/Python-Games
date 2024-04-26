@@ -9,6 +9,8 @@ import tempfile
 import pyautogui
 import numpy as np
 import time
+import cv2
+import mss
 
 class Empty_CC_1(tk.Tk):
     def __init__(self, window_size="800x600"):
@@ -273,15 +275,48 @@ class Empty_CC_2(tk.Toplevel):
         self.export_button.config(text="Executing", state="disabled")
         self.execution_running = True
 
-        # pd.set_option('future.no_silent_downcasting', True) # 避免在如 where、mask 和 clip 等方法中无提示地进行数据类型降级。
+        pd.set_option('future.no_silent_downcasting', True) # 避免在如 where、mask 和 clip 等方法中无提示地进行数据类型降级。
         sleep_time = float(self.sleep_time_var.get())
         locations = self.combined_df['Location'].apply(lambda x: str(x).zfill(9)).tolist() # 'Location'的列，转换为字符串，前面填0到9位，最后写成list。
         barcode_data_mark = False  # 在循环开始前定义，是否需要处理barcode，即不是empty CC
-        base64_image_data = "iVBORw0KGgoAAAANSUhEUgAAADgAAAAICAYAAACs/DyzAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsEAAA7BAbiRa+0AAAJpSURBVEhLnVWvjvswDP7uHqOKThrNA0zVSNFQWUHJQHHRxgaKC8Y2VFwwMlBWVDQyVXuA0JOmqK/R+9J/6+7W3353n2QpsWPHjh37LS6Keg6DCtk6wNlJcfCslpOtESQzxMUG7RmiyrAMkm5DuDGKzSBtUF0z7KIEims3LmDErS0FGd7t47rHMsqHMw/4JvuXPiARxlvYwoJFkbm/hA0cA8rcuE5DWXM1IlnHaVzLMU+GdZqGtRundShHfBIvHdmQPFM82DQ6Ke253b631ct7erRzp1f6Rh67Iz1p/G/9fMenBsSMfMlMFShimoHZ6yYDPaRjQ58S5BcN22Hok1DIj1ln846yBPzG9t8wqS9D+KJElI+8VQpREIAJx3vDEB8mAoiqwpVrKT8g9K0RtZBwbI2jqYb8CG075ExAsly2fIyLOTzCOcIJPviqf8OU/kww+nO3+Yl3qBtzRb+agyeubTgO1/qzPWHgrmDrS5dRhYu2sfr2mJZ3QGEq4LCFOO34op1ghPzIn7ENpx/nBV7ru20V9sSMM4MMxBJYLebQtxxnloJtM8ARXMqs+WZQ3MwtzBePEZomsFwusd5rCH/Fq55AJdiVfByn2/8Wz/SHL2aQI6IPxo/9lU2TJccAFXQlIMQVpqrUjQpsRfrW17SLhciw7hRbWiMTi6dBqDyiEwKbif+mkhNf0EPXB3+NH/oMuhQsXfcxr/x0Dd5IputhwyDa9m/S7ENzZCQIkR56Y+0YSZSR92ODvEzD87oeP4wQ/sP0AA8Z9tobRkDf6pvR4uth3PzPmDCY0m/u45jwWFkt2Ev25psofAGNAGgVBZyj1QAAAABJRU5ErkJggg=="
+        base64_image_data = "iVBORw0KGgoAAAANSUhEUgAAAA8AAABHCAIAAABXv4ocAAAAcElEQVR4nGNgwA+8WxdmasF5TARUowLSVDO27t5thiJyaoJr9VatzIUTg6QY0CUImUY/d4+CQQW0MhfSK+ZHVVOqehSQDEbT9xBSTUvAiF34P3bhwRMmhFRPZGCYODhcMqqaEKBlGhwFDAyj7W/CAAAbUyH1cJy34QAAAABJRU5ErkJggg=="
         image_data = base64.b64decode(base64_image_data) # 输出临时图片文件以判断WARNING
         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_image:
             tmp_image.write(image_data)
             tmp_image_path = tmp_image.name
+
+        def find_image(target_image_path, confidence=0.8):
+            # 读取目标图像
+            target_image = cv2.imread(target_image_path, cv2.IMREAD_COLOR)
+            target_gray = cv2.cvtColor(target_image, cv2.COLOR_BGR2GRAY)
+
+            # 捕获屏幕
+            with mss.mss() as sct:
+                found = False
+                # 遍历所有监视器，索引 0 是一个总结信息，因此从 1 开始
+                for monitor_number in range(1, len(sct.monitors)):
+                    monitor = sct.monitors[monitor_number]  # 获取监视器的详细信息
+                    screen = np.array(sct.grab(monitor))  # 捕获当前监视器的屏幕
+                    screen_gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
+
+                    # 匹配图像
+                    result = cv2.matchTemplate(screen_gray, target_gray, cv2.TM_CCOEFF_NORMED)
+                    _, max_val, _, _ = cv2.minMaxLoc(result)
+
+                    # 检查置信度
+                    if max_val >= confidence:
+                        # print(f"Image found with confidence {max_val} on monitor {monitor_number}")
+                        found = True
+                        # 如果找到了图像，可以选择在这里进行其他操作，比如返回图像的位置等
+                        # 这里只返回 True 表示找到了图像
+                        break
+
+                if found:
+                    return True
+                else:
+                    # print(f"Image not found, highest confidence {max_val}")
+                    return False
+
 
         def is_notepad_plus_plus_active(): # 这是运行循环里的窗口激活监控
             try:
@@ -307,7 +342,7 @@ class Empty_CC_2(tk.Toplevel):
             
             if location_df['Current Qty'].str.match(r'^\d+\s+units$').any(): # 'Current Qty'的值符合“数字+空格+units”的格式
                 barcode_data_mark = True # 说明有barcodes需要处理
-                location_df.loc[:, 'Barcode'] = location_df['Barcode'].replace('nan', np.nan)# 确保 'Barcode' 列中的 'nan' 文本被正确视为 NaN
+                location_df.loc[:, ['Barcode', 'Expiry Date']] = location_df[['Barcode', 'Expiry Date']].replace('nan', np.nan)# 确保 'Barcode' 列中的 'nan' 文本被正确视为 NaN
                 self.current_location_index += len(location_df) # 去到下一个location，即index加上location的df的长度
                 
                 if location_df['Barcode'].isna().any() or location_df['Expiry Date'].notna().any(): # 检查 'Barcode' 为空或 'Expiry Date' 不为空的情况
@@ -323,19 +358,16 @@ class Empty_CC_2(tk.Toplevel):
             pyautogui.press('enter')
             time.sleep(sleep_time)
             # print ("Location", current_location, "Enter, 等待", sleep_time, "秒")
-            try:
-                image_location = pyautogui.locateCenterOnScreen(tmp_image_path, confidence=0.5)
-                if image_location:
-                    message = f"\n\nWARNING message in location {locations[self.current_location_index-1]}, Ctrl + A sent to continue."
-                    self.text_box.insert(tk.END, message)
-                    self.text_box.see(tk.END)  # Scroll to the bottom
-                    pyautogui.hotkey('ctrl', 'a')
-                    time.sleep(sleep_time)
-                    # print ("Ctrl+A, 等待", sleep_time, "秒")
-            except pyautogui.ImageNotFoundException:
-                pass # 忽略未找到图像的异常
-            except Exception as e:
-                print("发生错误：", e) # 输出其他类型的错误信息和堆栈跟踪
+
+            found = find_image(tmp_image_path)
+
+            if found:
+                message = f"\n\nWARNING message in location {locations[self.current_location_index-1]}, Ctrl + A sent to continue."
+                self.text_box.insert(tk.END, message)
+                self.text_box.see(tk.END)  # Scroll to the bottom
+                pyautogui.hotkey('ctrl', 'a')
+                time.sleep(sleep_time)
+                # print ("Ctrl+A, 等待", sleep_time, "秒")
                 
             # 准备输入barcodes
             if barcode_data_mark:
